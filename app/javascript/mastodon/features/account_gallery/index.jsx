@@ -8,6 +8,7 @@ import { connect } from 'react-redux';
 
 import { lookupAccount, fetchAccount } from 'mastodon/actions/accounts';
 import { openModal } from 'mastodon/actions/modal';
+import { connectProfileStream } from 'mastodon/actions/streaming';
 import { ColumnBackButton } from 'mastodon/components/column_back_button';
 import { LoadMore } from 'mastodon/components/load_more';
 import { LoadingIndicator } from 'mastodon/components/loading_indicator';
@@ -90,7 +91,15 @@ class AccountGallery extends ImmutablePureComponent {
     const { accountId, isAccount, dispatch } = this.props;
 
     if (!isAccount) dispatch(fetchAccount(accountId));
+
     dispatch(expandAccountMediaTimeline(accountId));
+
+    if (this.disconnect) {
+      this.disconnect();
+      this.disconnect = null;
+    }
+
+    this.disconnect = dispatch(connectProfileStream(accountId, { onlyMedia: true }));
   }
 
   componentDidMount () {
@@ -100,6 +109,13 @@ class AccountGallery extends ImmutablePureComponent {
       this._load();
     } else {
       dispatch(lookupAccount(acct));
+    }
+  }
+
+  componentWillUnmount () {
+    if (this.disconnect) {
+      this.disconnect();
+      this.disconnect = null;
     }
   }
 

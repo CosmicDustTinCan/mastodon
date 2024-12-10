@@ -87,6 +87,7 @@ const PUBLIC_CHANNELS = [
   'public:remote:media',
   'hashtag',
   'hashtag:local',
+  'profile',
 ];
 
 // Used for priming the counters/gauges for the various metrics that are
@@ -420,6 +421,8 @@ const startServer = async () => {
       return 'direct';
     case '/api/v1/streaming/list':
       return 'list';
+    case '/api/v1/streaming/profile':
+      return 'profile';
     default:
       return undefined;
     }
@@ -972,6 +975,7 @@ const startServer = async () => {
    * @property {string} [tag]
    * @property {string} [list]
    * @property {string} [only_media]
+   * @property {string} [account_id]
    */
 
   /**
@@ -1096,6 +1100,17 @@ const startServer = async () => {
         reject(new AuthenticationError('Not authorized to stream this list'));
       });
 
+      break;
+    case 'profile':
+      if (!params.account_id) {
+        reject(new RequestError('Missing account id parameter'));
+        return;
+      }
+
+      resolve({
+        channelIds: [`timeline:profile:${params.account_id}:public`],
+        options: { needsFiltering: true },
+      });
       break;
     default:
       reject(new RequestError('Unknown stream type'));
